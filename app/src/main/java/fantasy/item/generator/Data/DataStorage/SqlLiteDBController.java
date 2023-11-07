@@ -1,7 +1,6 @@
 package fantasy.item.generator.Data.DataStorage;
 
 import java.io.File;
-import java.nio.file.FileSystemException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -17,12 +16,12 @@ import java.util.List;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 
-import fantasy.item.generator.Data.DataHelpers.DamageType;
-import fantasy.item.generator.Data.DataHelpers.Dice;
 import fantasy.item.generator.Data.DataHelpers.Rarity;
 import fantasy.item.generator.Data.DataHandling.EnumMultation;
-import fantasy.item.generator.Weapon.AbstractWeapon;
+import fantasy.item.generator.Weapon.Weapon;
 import fantasy.item.generator.Weapon.WeaponProperties;
 import fantasy.item.generator.Weapon.WeaponsData;
 
@@ -58,30 +57,24 @@ public class SqlLiteDBController {
 
 
     private void loadInTables() {
-        String sqlWeapons = "SELECT * FROM " + WEAPONS_DEFAULT_TABLE_NAME;
-        List<WeaponProperties> weaponProps = new ArrayList<>();
+        String weaponsSql = "FROM " + WeaponProperties.class.getSimpleName();
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+        try(Session session = sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
+            Query<WeaponProperties> queryProps = session.createQuery(weaponsSql, WeaponProperties.class);
+            List<WeaponProperties> weaponProperties = queryProps.list();
+            transaction.commit();
+            EnumMultation.setWeaponsProps(weaponProperties);
+        } catch (Exception e){
+            System.out.println("Exception occured: " + e.getMessage());
+        }
+
         HashMap<Rarity, List<String>> rarityDescriptions = new HashMap<>();
         try(Connection connection = DriverManager.getConnection(SQL_URL)){
-            PreparedStatement preparedStatement = connection.prepareStatement(sqlWeapons);
-            ResultSet weaponsResults = preparedStatement.executeQuery();
-            while(weaponsResults.next()){
-                WeaponProperties prop = new WeaponProperties(
-                    weaponsResults.getString("weaponType"),
-                    weaponsResults.getInt("cost"),
-                    weaponsResults.getString("costUnit"),
-                    (weaponsResults.getString("die").isBlank()) ? null :  Dice.valueOf(weaponsResults.getString("die")),
-                    weaponsResults.getInt("diceMulti"),
-                    (weaponsResults.getString("damageType").isBlank()) ? null :  DamageType.valueOf(weaponsResults.getString("damageType")),
-                    weaponsResults.getDouble("weight"),
-                    weaponsResults.getString("info")
-                );
-
-                weaponProps.add(prop);
-            }
             for(Rarity eValue : Rarity.values()){
                 String sqlRarity = String.format("SELECT %s FROM %s%s", eValue.name(), RARITY_DESCRIPTORS_TABLE_NAME,eValue.name());
                 ArrayList<String> descriptors = new ArrayList<>();
-                preparedStatement = connection.prepareStatement(sqlRarity);
+                PreparedStatement preparedStatement = connection.prepareStatement(sqlRarity);
                 ResultSet resultSet = preparedStatement.executeQuery();
                 while (resultSet.next()){
                     descriptors.add(resultSet.getString(eValue.name()));
@@ -92,10 +85,8 @@ public class SqlLiteDBController {
         } catch (SQLException e){
             System.out.println("Exception occured: " + e.getMessage());
         }
-
-        EnumMultation.setWeaponsProps(weaponProps);
-        EnumMultation.setRarityMapFromDB(rarityDescriptions);
         
+        EnumMultation.setRarityMapFromDB(rarityDescriptions);
     }
 
     private boolean initializeSQLDB() {
@@ -104,7 +95,7 @@ public class SqlLiteDBController {
             if (connection != null){
                 DatabaseMetaData meta = connection.getMetaData();
                 System.out.println("Database was successfully created! Driver name is: " + meta.getDriverName());
-                initializeWeaponsTables(connection);
+                initializeWeaponsTables();
                 initializeRarityTables(connection);
                 return true;
             }
@@ -115,11 +106,13 @@ public class SqlLiteDBController {
     }
 
 
-    public static void initializeWeaponsTypeTables(AbstractWeapon weapon) {
+    public static void initializeWeaponsTypeTables(List<Weapon> weapons) {
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
         try (Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            session.persist(weapon);
+            for(Weapon weapon: weapons){
+                session.persist(weapon);
+            }    
             session.getTransaction().commit();
         } catch (Exception e){
             System.out.println("Exception occured: " + e.getMessage());
@@ -136,7 +129,6 @@ public class SqlLiteDBController {
             Statement statement = connection.createStatement();
             statement.execute(sqlStatement);
 
-
             sqlStatement = String.format(preparedStatementString, RARITY_DESCRIPTORS_TABLE_NAME + eValue.name(), eValue.name());
             for(String descriptor : eValue.getDefaultDescriptors()){
                 PreparedStatement preparedStatement = connection.prepareStatement(sqlStatement);
@@ -149,35 +141,43 @@ public class SqlLiteDBController {
     }
 
 
-    private void initializeWeaponsTables(Connection connection) throws SQLException{
-        String sqlStatement = "CREATE TABLE IF NOT EXISTS " + WEAPONS_DEFAULT_TABLE_NAME + "(\n"
-            +" weaponType text PRIMARY KEY,\n"
-            + " cost integer,\n"
-            + " costUnit text,\n"
-            + " die text,\n"
-            + " diceMulti integer,\n"
-            + " damageType text,\n"
-            + " weight double,\n"
-            + " info text\n"
-            + ");";
-        Statement statement = connection.createStatement();
-        statement.execute(sqlStatement);
-
-        List<WeaponProperties> weapons = WeaponsData.initializeWeaponsDB();
-        sqlStatement = String.format(weapons.get(0).getSQLInsertString(), WEAPONS_DEFAULT_TABLE_NAME);
-        PreparedStatement preparedStatement = connection.prepareStatement(sqlStatement);
-        for(WeaponProperties weapon : weapons){
-            
-            preparedStatement.setString(1, weapon.getWeaponType());
-            preparedStatement.setInt(2, weapon.getCost());
-            preparedStatement.setString(3, weapon.getCostUnit());
-            preparedStatement.setString(4, weapon.getDieString());
-            preparedStatement.setInt(5, weapon.getDiceMulti());
-            preparedStatement.setString(6, weapon.getDamageTypeString());
-            preparedStatement.setDouble(7, weapon.getWeight());
-            preparedStatement.setString(8, weapon.getInfo());
-            preparedStatement.executeUpdate();
+    private static void initializeWeaponsTables() throws SQLException{
+        List<WeaponProperties> weapons = WeaponsData.getInstance().initializeWeaponsDB();
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+        try (Session session = sessionFactory.openSession()){
+            session.beginTransaction();
+            for(WeaponProperties weapon : weapons){
+                session.persist(weapon);
+            }
+            session.getTransaction().commit();
+        } catch (Exception e){
+            System.out.println("Exception occured: " + e.getMessage());
         }
+        // String sqlStatement = "CREATE TABLE IF NOT EXISTS " + WEAPONS_DEFAULT_TABLE_NAME + "(\n"
+        //     +" weaponType text PRIMARY KEY,\n"
+        //     + " cost integer,\n"
+        //     + " costUnit text,\n"
+        //     + " die text,\n"
+        //     + " diceMulti integer,\n"
+        //     + " damageType text,\n"
+        //     + " weight double,\n"
+        //     + " info text\n"
+        //     + ");";
+        // Statement statement = connection.createStatement();
+        // statement.execute(sqlStatement);
+
+        // sqlStatement = String.format(weapons.get(0).getSQLInsertString(), WEAPONS_DEFAULT_TABLE_NAME);
+        // PreparedStatement preparedStatement = connection.prepareStatement(sqlStatement);
+
+            // preparedStatement.setString(1, weapon.getWeaponType());
+            // preparedStatement.setInt(2, weapon.getCost());
+            // preparedStatement.setString(3, weapon.getCostUnit());
+            // preparedStatement.setString(4, weapon.getDieString());
+            // preparedStatement.setInt(5, weapon.getDiceMulti());
+            // preparedStatement.setString(6, weapon.getDamageTypeString());
+            // preparedStatement.setDouble(7, weapon.getWeight());
+            // preparedStatement.setString(8, weapon.getInfo());
+            // preparedStatement.executeUpdate();
     }
 
 
@@ -191,8 +191,6 @@ public class SqlLiteDBController {
                 System.out.println("A problem occured while attempting to create file at: " + storage.getAbsolutePath() + "\n" + e.getMessage());
             }
         }
-
-        
         return storage.getAbsolutePath() + "/" + DB_FILE_NAME;
     }
 

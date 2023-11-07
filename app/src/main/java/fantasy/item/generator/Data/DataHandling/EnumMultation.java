@@ -6,6 +6,7 @@ import java.util.List;
 import fantasy.item.generator.Data.DataHelpers.Rarity;
 import fantasy.item.generator.Data.DataStorage.SqlLiteDBController;
 import fantasy.item.generator.Weapon.WeaponProperties;
+import fantasy.item.generator.Weapon.WeaponsData;
 
 public class EnumMultation {
     private static HashMap<Rarity, List<String>> rarityMap = genRarityMap();
@@ -20,6 +21,7 @@ public class EnumMultation {
     }
     public static void setWeaponsProps(List<WeaponProperties> weapons){
         weaponProps = weapons;
+        WeaponsData.getInstance().setWeaponsList(weapons);
     }
 
     public static List<WeaponProperties> getWeaponsProps(){

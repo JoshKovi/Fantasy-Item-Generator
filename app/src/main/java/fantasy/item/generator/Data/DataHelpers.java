@@ -20,63 +20,94 @@ public class DataHelpers {
         D4{
             public Dice up(){return D6;}
             public Dice down(){return D1;}
-            public int maxD(){return 4;}
+            public int maxD(){return 5;}
         }, 
         D6{
             public Dice up(){return D8;}
             public Dice down(){return D4;}
-            public int maxD(){return 6;}
+            public int maxD(){return 7;}
         }, 
         D8{
             public Dice up(){return D10;}
             public Dice down(){return D6;}
-            public int maxD(){return 8;}
+            public int maxD(){return 9;}
         }, 
         D10{
             public Dice up(){return D12;}
             public Dice down(){return D8;}
-            public int maxD(){return 10;}
+            public int maxD(){return 11;}
         }, 
         D12{
             public Dice up(){return D20;}
             public Dice down(){return D10;}
-            public int maxD(){return 12;}
+            public int maxD(){return 13;}
         }, 
         D20{
             public Dice up(){return D20;}
             public Dice down(){return D12;}
-            public int maxD(){return 20;}
+            public int maxD(){return 21;}
         };
-
+        private static final int LENGTH = 7;
         abstract public Dice up();
         abstract public Dice down();
         abstract public int maxD();
+        public int getLength() {return LENGTH;}
     }
 
     public static enum GPType{
         CP, SP, GP
     }
 
-    public static enum SimpleMeleeWeaponType {
+    public static enum SimpleMeleeWeaponTypes {
         Club, Dagger, Greatclub, Handaxe, Javelin, Light_Hammer, Mace, Quarterstaff,
         Sickle, Spear
     }
 
-    public static enum SimpleRangeWeaponType {
+    public static enum SimpleRangeWeaponTypes {
         Light_Crossbow, Dart, Shortbow, Sling
     }
 
-    public static enum MartialMeleeWeaponType {
+    public static enum MartialMeleeWeaponTypes {
         Battleaxe, Flail, Glaive, Greataxe, Greatsword, Halberd, Lance, Longsword, Maul, Morningstar,
         Pike, Rapier, Scimitar, Shortsword, Trident, War_Pick, Warhammer, Whip
     }
 
-    public static enum MartialRangeWeaponType {
-        Blowgun, One_Handed_Crossbow, Heavy_Crossbow, Longbow, Net
+    public static enum MartialRangeWeaponTypes {
+        Blowgun, One_Handed_Crossbow, Heavy_Crossbow, Longbow, Net;
     }
 
     public static enum WeaponType {
-        SimpleMeleeWeaponType, SimpleRangeWeaponType, MartialMeleeWeaponType, MartialRangeWeaponType
+        SimpleMeleeWeaponType{
+            public Enum<SimpleMeleeWeaponTypes>[] getSubTypes(){return SimpleMeleeWeaponTypes.values();}
+            public int getSubLength(){return SimpleMeleeWeaponTypes.values().length;}
+        }, 
+        SimpleRangeWeaponType{
+            public Enum<SimpleRangeWeaponTypes>[] getSubTypes() {return SimpleRangeWeaponTypes.values();}
+            public int getSubLength(){return SimpleRangeWeaponTypes.values().length;}
+        }, 
+        MartialMeleeWeaponType{
+            public Enum<MartialMeleeWeaponTypes>[] getSubTypes(){return MartialMeleeWeaponTypes.values();}
+            public int getSubLength(){return MartialMeleeWeaponTypes.values().length;}
+        }, 
+        MartialRangeWeaponType{
+            public Enum<MartialRangeWeaponTypes>[] getSubTypes(){return MartialRangeWeaponTypes.values();}
+            public int getSubLength(){return MartialRangeWeaponTypes.values().length;}
+        };
+
+        private static final int LENGTH = 4;
+        public static int getLength() {return LENGTH;}
+        public abstract Enum<?>[] getSubTypes();
+        public abstract int getSubLength();
+
+        public static WeaponType reverseTypeLookup(String subWeaponType){
+            for(WeaponType weaponType : WeaponType.values()){
+                for(Enum<?> eValue : weaponType.getSubTypes()){
+                    if(eValue.name().equalsIgnoreCase(subWeaponType)) return weaponType;
+                }
+            }
+            return null;
+        }
+        
     }
 
     public static enum Rarity {
@@ -140,10 +171,12 @@ public class DataHelpers {
             }
         };
 
+        private static final int LENGTH = 5; //Update for changes.
         public abstract Rarity up();
         public abstract Rarity down();
         public abstract int getIntValue();
         public abstract List<String> getDefaultDescriptors();
+        public static int getLength() {return LENGTH;}
         public List<String> getDescriptors(Rarity rarity){
             return EnumMultation.getRarityDescriptors(rarity);
         }

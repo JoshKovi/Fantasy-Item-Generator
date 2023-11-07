@@ -1,30 +1,38 @@
 package fantasy.item.generator.Data;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import fantasy.item.generator.Data.DataHelpers.GPType;
 import fantasy.item.generator.Data.DataHelpers.Rarity;
+
+import java.util.Random;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 
 @Entity
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public abstract class Item {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    public Long id;
     private String name;
-    private String dataEntryString;
     private Rarity rarity;
     private double gpValue;
     private int cost;
     private GPType gpUnit;
     private double weight;
     private String weightUnits = "lbs"; //Default but overridable
-    private Integer roll;
+    private Integer roll = -100; 
+
+    public static int getRandomInt(int maxBoundInclusive){
+        return new Random().nextInt(maxBoundInclusive);
+    }
+
+    // Abstract  Methods
+    abstract public void generateName();
 
     // Custom setters
     public void setGpValue(double gp){
@@ -49,6 +57,9 @@ public abstract class Item {
     }
 
     // Default Setters
+    public void setName(String name){
+        this.name = name;
+    };
     public void setRarity(Rarity rarity) {
         this.rarity = rarity;
     }
@@ -97,12 +108,4 @@ public abstract class Item {
     public String getWeightUnits() {
         return this.weightUnits;
     }
-
-    // Abstract  Methods
-    abstract public void setName(String name);
-
-    abstract public String generateName(String name);
-
-    abstract public String entityAsString() throws JsonProcessingException;
-
 }

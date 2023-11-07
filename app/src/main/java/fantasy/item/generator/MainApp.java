@@ -3,38 +3,30 @@
  */
 package fantasy.item.generator;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import com.google.common.io.Files;
-
-import fantasy.item.generator.Data.DataHelpers.DamageType;
-import fantasy.item.generator.Data.DataHelpers.Rarity;
-import fantasy.item.generator.Data.DataHelpers.WeaponType;
+import fantasy.item.generator.Data.DataHelpers.Dice;
 import fantasy.item.generator.Data.DataStorage.SqlLiteDBController;
-import fantasy.item.generator.Weapon.AbstractWeapon;
-import fantasy.item.generator.Weapon.WeaponGenerator;
-import fantasy.item.generator.Weapon.WeaponProperties;
+import fantasy.item.generator.Weapon.Weapon;
+
 
 public class MainApp {
 
     public static void main(String[] args) {
 
         SqlLiteDBController dbController = SqlLiteDBController.getInstance();
+        List<Weapon> weapons = new ArrayList<>();
 
-        
-        List<AbstractWeapon> weapons = new ArrayList<>();
-        WeaponGenerator generator = new WeaponGenerator();
         int count = 0; 
-        while (count < 5000){
-            int picker = new Random().nextInt(Rarity.values().length);
-            AbstractWeapon weapon = generator.generateWeapon(Rarity.values()[picker], null);
-            SqlLiteDBController.initializeWeaponsTypeTables(weapon);
+        while (count < 1000){
+            int picker = new Random().nextInt(1,Dice.D20.maxD());
+            Weapon weapon = new Weapon(picker);
             weapons.add(weapon);
             count++;
         }
+        SqlLiteDBController.initializeWeaponsTypeTables(weapons);
 
 
 

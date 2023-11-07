@@ -11,9 +11,10 @@ import fantasy.item.generator.Data.DataHelpers.WeaponType;
 import javax.persistence.Entity;
 
 @Entity
-public abstract class AbstractWeapon extends Item {
+public class Weapon extends Item {
 
     private WeaponType weaponType;
+    private String weaponSubType;
     
     private double variance;
     private double averageDmgPerTurn10K;
@@ -30,22 +31,67 @@ public abstract class AbstractWeapon extends Item {
     private DamageType addDamageType;
     private int addMultiple;
 
-    abstract public String getMinorWeaponType();
+    public Weapon(){
+    }
+    public Weapon(Rarity rarity){
+        this(rarity, null);
+    }
+    public Weapon(Integer roll){
+        this(Rarity.values()[getRandomInt(Rarity.getLength())], roll);
+    }
+    public Weapon(Rarity rarity, Integer roll){
+        this(rarity, roll, WeaponType.values()[getRandomInt(WeaponType.getLength())]);
+    }
+    public Weapon(Rarity rarity, Integer roll, WeaponType weaponType){
+        this(rarity, roll, weaponType, weaponType.getSubTypes()[getRandomInt(weaponType.getSubLength())], null);
 
-    public void generateDieFromRarity(Rarity rarity) {
-        setRarity(rarity);
+    }
+    public Weapon(Rarity rarity, Integer roll, Enum<?> weaponSubType){
+        this(rarity, roll, WeaponType.reverseTypeLookup(weaponSubType.name()), weaponSubType, null);
+
+    }
+    public Weapon(Rarity rarity, Integer roll, WeaponType weaponType, Enum<?> weaponSubType, DamageType addDamageType){
+        if(rarity == null){
+            rarity = Rarity.values()[getRandomInt(Rarity.getLength())];
+        }
+        this.setRarity(rarity);
+        if(roll == null){
+            roll = -100;
+        }
+        this.setRoll(roll);
+        if (weaponType == null && weaponSubType == null){
+            weaponType = WeaponType.values()[getRandomInt(WeaponType.getLength())];
+            weaponSubType = weaponType.getSubTypes()[getRandomInt(weaponType.getSubLength())];
+        } else if (weaponType == null) {
+            weaponType = WeaponType.reverseTypeLookup(weaponSubType.name());
+        } else if (weaponSubType == null){
+            weaponSubType = weaponType.getSubTypes()[getRandomInt(weaponType.getSubLength())];
+        }
+        this.weaponType = weaponType;
+        this.weaponSubType = weaponSubType.name().replace("_", " ");
+        updateFromWeapon(WeaponsData.getInstance().getWeaponByName(this.weaponSubType));
+        if(addDamageType == null){
+            addDamageType = DamageType.values()[getRandomInt(DamageType.values().length)];
+        }
+        this.addDamageType = addDamageType;
+        generateDieFromRarity();
+        getDamageAveragePer10k();
+        generateName();
+    }
+
+    public void generateDieFromRarity() {
+        Rarity rarity = this.getRarity();
         Integer rollLocal = (getRoll() == null) ? -100: getRoll();
         boolean rolled = (rollLocal != -100);
-        
+        double rollMod = 1;
+
         if(rollLocal >= 20){
-            rarity = rarity.up();
-        } else if (rollLocal == -100){ //Roll way not made, ignore and set to 0
-            rollLocal = 0;
-        } else if (rollLocal <= 1){
-            rarity = rarity.down();
-        }
+            rollMod = 1.5;
+        } else if (rolled && rollLocal <= 1){
+            rollMod = 1.5;
+        } 
         //If roll is above average add it to variance, if less subtract it. (Divided in half so as to not be overwhelming)
-        double rollMod = (rolled) ? (rollLocal/10.0f - 1.0f)/2.0f : 0.0f; 
+        rollMod *= (rolled) ? (rollLocal/10.0f - 1.0f)/2.0f : 0.0f; 
 
         int basePercent = rarity.getIntValue();
         double bottomRange = basePercent * 0.75f * 0.01;
@@ -73,11 +119,8 @@ public abstract class AbstractWeapon extends Item {
         } else {
             setFromRarity(down, 1, Dice.D1, 0, rarity);
         }
-        int picker = new Random().nextInt(DamageType.values().length);
-        this.addDamageType = DamageType.values()[picker];
         this.variance = variance;
         setCost((int)(getCost() * (Rarity.Junk.compareTo(rarity) * -4 * this.addMultiple + 1)));
-        
     }
 
     private void setFromRarity(Dice main, int mainMulti, Dice addDice, int addMulti, Rarity rarity){
@@ -102,7 +145,7 @@ public abstract class AbstractWeapon extends Item {
 
     }
 
-    public String getDamageAveragePer1k(){
+    public String getDamageAveragePer10k(){
         double average = 0;
         for(int i = 0; i < 10000; i ++){
             int total = 0;
@@ -129,7 +172,24 @@ public abstract class AbstractWeapon extends Item {
         return "" +((double)average)/10000.0f;
     }
 
+    public void generateName() {
+        String addDmgType = "";
+
+        if(this.getAdditionalMutliple() > 0){
+            addDmgType = this.getAdditionalDamageType().name() + " ";
+        }
+        Rarity rarity = this.getRarity();
+        int picker = new Random().nextInt(rarity.getDescriptors(rarity).size());
+        String name = rarity.getDescriptors(rarity).get(picker) + " " + addDmgType
+            + this.weaponSubType;
+        this.setName(name);
+    }
+
     // Setters
+    public void setWeaponSubType(String weaponSubType){
+        this.weaponSubType = weaponSubType;
+    }
+
     public void setAverageDmgPerTurn10K(double avg){
         this.averageDmgPerTurn10K = avg;
     }
@@ -172,6 +232,10 @@ public abstract class AbstractWeapon extends Item {
     }
     public String getInfo() {
         return info;
+    }
+
+    public String getWeaponSubType(){
+        return weaponSubType;
     }
 
     public double setAverageDmgPerTurn10K(){

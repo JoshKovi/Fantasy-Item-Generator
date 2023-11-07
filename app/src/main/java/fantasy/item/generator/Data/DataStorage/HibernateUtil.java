@@ -3,10 +3,8 @@ package fantasy.item.generator.Data.DataStorage;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-import fantasy.item.generator.Weapon.MartialMeleeWeapon;
-import fantasy.item.generator.Weapon.MartialRangeWeapon;
-import fantasy.item.generator.Weapon.SimpleMeleeWeapon;
-import fantasy.item.generator.Weapon.SimpleRangeWeapon;
+import fantasy.item.generator.Weapon.Weapon;
+import fantasy.item.generator.Weapon.WeaponProperties;
 
 
 public class HibernateUtil {
@@ -20,13 +18,12 @@ public class HibernateUtil {
             configuration.setProperty("hibernate.dialect", "org.sqlite.hibernate.dialect.SQLiteDialect");
             configuration.setProperty("hibernate.connection.driver_class", "org.sqlite.JDBC");
             configuration.setProperty("hibernate.connection.url", SqlLiteDBController.SQL_URL);
-            configuration.setProperty("hibernate.hbm2ddl.auto", "create");
+            configuration.setProperty("hibernate.hbm2ddl.auto", "update");
 
             //Annotated Classes to use
-            configuration.addAnnotatedClass(MartialMeleeWeapon.class);
-            configuration.addAnnotatedClass(MartialRangeWeapon.class);
-            configuration.addAnnotatedClass(SimpleMeleeWeapon.class);
-            configuration.addAnnotatedClass(SimpleRangeWeapon.class);
+            configuration.addAnnotatedClass(Weapon.class);
+            configuration.addAnnotatedClass(WeaponProperties.class);
+
             
             return configuration.buildSessionFactory();
         } catch (Exception e) {

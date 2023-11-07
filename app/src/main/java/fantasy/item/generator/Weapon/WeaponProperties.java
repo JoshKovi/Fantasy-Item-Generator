@@ -1,20 +1,25 @@
 package fantasy.item.generator.Weapon;
 
-import java.util.Arrays;
-import java.util.List;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 import fantasy.item.generator.Data.DataHelpers.DamageType;
 import fantasy.item.generator.Data.DataHelpers.Dice;
 
+@Entity
 public class WeaponProperties {
-    String weaponType;
-    int cost;
-    String costUnit;
-    Dice die;
-    int diceMulti;
-    DamageType damageType;
-    double weight;
-    String info;
+    @Id
+    private String weaponType;
+    private int cost;
+    private String costUnit;
+    private Dice die;
+    private int diceMulti;
+    private DamageType damageType;
+    private double weight;
+    private String info;
+
+    public WeaponProperties(){};
 
     public WeaponProperties(String weaponType, int cost, String costUnit,
             Dice die, int diceMulti, DamageType damageType, double weight, String info) {
@@ -28,19 +33,19 @@ public class WeaponProperties {
         this.info = info;
     }
 
-    public String getSQLInsertString(){
-        String columnNames = "(weaponType,cost,costUnit,die,diceMulti,damageType,weight,info)";
-        String values = "(?,?,?,?,?,?,?,?)";
-        String sql = "INSERT INTO %s"+ columnNames + " VALUES" + values;
-        return sql;
-    }
+    // public String getSQLInsertString(){
+    //     String columnNames = "(weaponType,cost,costUnit,die,diceMulti,damageType,weight,info)";
+    //     String values = "(?,?,?,?,?,?,?,?)";
+    //     String sql = "INSERT INTO %s"+ columnNames + " VALUES" + values;
+    //     return sql;
+    // }
 
-    public List<String> replaceSQLEntry(){
-        return Arrays.asList(new String[]{
-            "DELETE FROM %s WHERE weaponType='"+ weaponType +"'",
-            getSQLInsertString()
-        });
-    }
+    // public List<String> replaceSQLEntry(){
+    //     return Arrays.asList(new String[]{
+    //         "DELETE FROM %s WHERE weaponType='"+ weaponType +"'",
+    //         getSQLInsertString()
+    //     });
+    // }
 
     public String getWeaponType() {
         return weaponType;
