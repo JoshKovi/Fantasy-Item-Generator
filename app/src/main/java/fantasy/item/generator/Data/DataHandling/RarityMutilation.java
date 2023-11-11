@@ -3,14 +3,12 @@ package fantasy.item.generator.Data.DataHandling;
 import java.util.HashMap;
 import java.util.List;
 
-import fantasy.item.generator.Data.DataHelpers.Rarity;
+import fantasy.item.generator.Data.Attributes.Rarity;
 import fantasy.item.generator.Data.DataStorage.SqlLiteDBController;
-import fantasy.item.generator.Weapon.WeaponProperties;
-import fantasy.item.generator.Weapon.WeaponsData;
 
-public class EnumMultation {
+public class RarityMutilation {
     private static HashMap<Rarity, List<String>> rarityMap = genRarityMap();
-    private static List<WeaponProperties> weaponProps;
+
 
     public static List<String> getRarityDescriptors(Rarity rarity) {
         return rarityMap.get(rarity);
@@ -18,14 +16,6 @@ public class EnumMultation {
 
     public static void setRarityMapFromDB(HashMap<Rarity, List<String>> map){
         rarityMap = map;
-    }
-    public static void setWeaponsProps(List<WeaponProperties> weapons){
-        weaponProps = weapons;
-        WeaponsData.getInstance().setWeaponsList(weapons);
-    }
-
-    public static List<WeaponProperties> getWeaponsProps(){
-        return weaponProps;
     }
 
 
@@ -38,23 +28,36 @@ public class EnumMultation {
     }
 
     public static void addDescriptor(Rarity rarity, String desc) {
-        SqlLiteDBController controller = SqlLiteDBController.getInstance();
         rarityMap.get(rarity).add(desc);
-        controller.addListEntryToTable(SqlLiteDBController.RARITY_DESCRIPTORS_TABLE_NAME + rarity.name(), rarity.name(), desc);
+        SqlLiteDBController.getInstance().addListEntryToTable(
+            SqlLiteDBController.RARITY_DESCRIPTORS_TABLE_NAME + rarity.name(), rarity.name(), desc);
 
     }
 
     public static void removeDescriptorByName(Rarity rarity, String desc) {
-        SqlLiteDBController controller = SqlLiteDBController.getInstance();
         rarityMap.get(rarity).remove(desc);
-        controller.removeListEntryFromTable(SqlLiteDBController.RARITY_DESCRIPTORS_TABLE_NAME + rarity.name(), rarity.name(), desc);
+        SqlLiteDBController.getInstance().removeListEntryFromTable(
+            SqlLiteDBController.RARITY_DESCRIPTORS_TABLE_NAME + rarity.name(), rarity.name(), desc);
     }
 
     public static void removeDescriptorByIndex(Rarity rarity, int index) {
+        String desc = rarityMap.get(rarity).remove(index);
+        if(desc != null && !desc.isEmpty()){
+            SqlLiteDBController.getInstance().removeListEntryFromTable(
+                SqlLiteDBController.RARITY_DESCRIPTORS_TABLE_NAME + rarity.name(), 
+                rarity.name(), desc);
+        } else {
+            System.out.println("The Descriptor did not exist.");
+        }
+        
     }
 
     public static void addDescriptors(Rarity rarity, List<String> descriptors) {
+        rarityMap.get(rarity).addAll(descriptors);
+        for(String desc : descriptors){
+            SqlLiteDBController.getInstance().addListEntryToTable(
+                SqlLiteDBController.RARITY_DESCRIPTORS_TABLE_NAME + rarity.name(), 
+                rarity.name(), desc);
+        }
     }
-
-    
 }

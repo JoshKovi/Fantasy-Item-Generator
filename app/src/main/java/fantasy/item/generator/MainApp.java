@@ -7,9 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import fantasy.item.generator.Data.DataHelpers.Dice;
+import fantasy.item.generator.Data.Attributes.Dice;
 import fantasy.item.generator.Data.DataStorage.SqlLiteDBController;
-import fantasy.item.generator.Weapon.Weapon;
+import fantasy.item.generator.Data.Items.Weapon.Weapon;
+import fantasy.item.generator.Data.Items.Weapon.WeaponsData;
 
 
 public class MainApp {
@@ -17,57 +18,19 @@ public class MainApp {
     public static void main(String[] args) {
 
         SqlLiteDBController dbController = SqlLiteDBController.getInstance();
+        
         List<Weapon> weapons = new ArrayList<>();
 
+
         int count = 0; 
-        while (count < 1000){
+        while (count < 100){
             int picker = new Random().nextInt(1,Dice.D20.maxD());
             Weapon weapon = new Weapon(picker);
+            WeaponsData.getInstance().addWeapon(weapon);
             weapons.add(weapon);
             count++;
         }
-        SqlLiteDBController.initializeWeaponsTypeTables(weapons);
-
-
-
-
-        /* This is code for building a big ole CSV, keep for testing for now */
-
-        // WeaponGenerator generator = new WeaponGenerator();
-
-        // List<AbstractWeapon> weapons = new ArrayList<>();
-
-        // int count = 0;
-
-        // while(count < 5000){
-        //     weapons.add(generator.generateWeapon());
-        //     count++;
-        // }
-
-        // List<WeaponProperties> weaponsProps = generator.getWeaponsData().getWeaponProperties();
-
-        // while(count < 10000){
-        //     int picker = new Random().nextInt(weaponsProps.size());
-        //     int addPicker = new Random().nextInt(DamageType.values().length);
-        //     weapons.add(generator.generateWeapon(null, null, weaponsProps.get(picker).getWeaponType().replaceAll(" ", "_"), DamageType.values()[addPicker].name()));
-        //     count++;
-        // }
-        // File file = new File("C:/Users/joshu/Documents/Fantasy Item Generator/Extra Stuff", "output.csv");
-        // try{
-        //     String fileOutput = "Name,Tier,Main Dice,Main Damage Type,Extra Dice,Extra Damage Type,Cost: GP, Average Hit Per 10k\n";
-        //     for(AbstractWeapon weapon : weapons){
-        //         fileOutput += weapon.getName() + "," + weapon.getRarity().name()
-        //         + "," + weapon.getMainMutliple() + weapon.getMainDieString()
-        //         + "," + weapon.getMainDamageString() + "," + weapon.getAdditionalMutliple() + weapon.getAdditionalDieString()
-        //         + "," + weapon.getAdditionalDamageType() + "," + String.format("%.2f", weapon.getGpValue()) 
-        //         + "," + weapon.getDamageAveragePer1k() + "\n";
-        //     }
-        //     Files.write(fileOutput.getBytes(), file);
-        // } catch (Exception e){
-        //     System.out.println(e.getMessage());
-        // }
-
-
+        SqlLiteDBController.addToWeaponsTable(WeaponsData.getInstance().getWeapons());
 
 
         return;

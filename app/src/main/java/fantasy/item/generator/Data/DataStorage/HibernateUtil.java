@@ -3,12 +3,12 @@ package fantasy.item.generator.Data.DataStorage;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-import fantasy.item.generator.Weapon.Weapon;
-import fantasy.item.generator.Weapon.WeaponProperties;
+import fantasy.item.generator.Data.Items.Weapon.Weapon;
+import fantasy.item.generator.Data.Items.Weapon.WeaponProperties;
 
 
 public class HibernateUtil {
-    private static final SessionFactory sessionFactory = buildSessionFactory();
+    private static SessionFactory sessionFactory = buildSessionFactory();
 
     private static SessionFactory buildSessionFactory(){
         try{
@@ -30,6 +30,11 @@ public class HibernateUtil {
             System.out.println("Error In BuildSession: " + e.getMessage());
             throw new ExceptionInInitializerError(e);
         }
+    }
+
+    public static SessionFactory resetSessionFactory() {
+        sessionFactory = buildSessionFactory();
+        return sessionFactory;
     }
 
     public static SessionFactory getSessionFactory() {

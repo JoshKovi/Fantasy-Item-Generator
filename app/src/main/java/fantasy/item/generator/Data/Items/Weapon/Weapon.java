@@ -1,13 +1,14 @@
-package fantasy.item.generator.Weapon;
+package fantasy.item.generator.Data.Items.Weapon;
 
 import java.util.Random;
 
-import fantasy.item.generator.Data.Item;
-import fantasy.item.generator.Data.DataHelpers.DamageType;
-import fantasy.item.generator.Data.DataHelpers.Dice;
-import fantasy.item.generator.Data.DataHelpers.GPType;
-import fantasy.item.generator.Data.DataHelpers.Rarity;
-import fantasy.item.generator.Data.DataHelpers.WeaponType;
+import fantasy.item.generator.Data.Attributes.Dice;
+import fantasy.item.generator.Data.Attributes.Rarity;
+import fantasy.item.generator.Data.Attributes.WeaponType;
+import fantasy.item.generator.Data.Attributes.DataHelpers.DamageType;
+import fantasy.item.generator.Data.Attributes.DataHelpers.GPType;
+import fantasy.item.generator.Data.Items.Item;
+
 import javax.persistence.Entity;
 
 @Entity
@@ -69,7 +70,7 @@ public class Weapon extends Item {
         }
         this.weaponType = weaponType;
         this.weaponSubType = weaponSubType.name().replace("_", " ");
-        updateFromWeapon(WeaponsData.getInstance().getWeaponByName(this.weaponSubType));
+        updateFromWeapon(WeaponsData.getInstance().getWeaponPropsByName(this.weaponSubType));
         if(addDamageType == null){
             addDamageType = DamageType.values()[getRandomInt(DamageType.values().length)];
         }

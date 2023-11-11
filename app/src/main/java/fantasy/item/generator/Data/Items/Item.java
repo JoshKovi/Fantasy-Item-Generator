@@ -1,7 +1,4 @@
-package fantasy.item.generator.Data;
-
-import fantasy.item.generator.Data.DataHelpers.GPType;
-import fantasy.item.generator.Data.DataHelpers.Rarity;
+package fantasy.item.generator.Data.Items;
 
 import java.util.Random;
 
@@ -11,6 +8,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+
+import fantasy.item.generator.Data.Attributes.DataHelpers.GPType;
+import fantasy.item.generator.Data.Attributes.Rarity;
 
 @Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
@@ -26,6 +26,7 @@ public abstract class Item {
     private double weight;
     private String weightUnits = "lbs"; //Default but overridable
     private Integer roll = -100; 
+    private String[] profiles;
 
     public static int getRandomInt(int maxBoundInclusive){
         return new Random().nextInt(maxBoundInclusive);
@@ -57,6 +58,9 @@ public abstract class Item {
     }
 
     // Default Setters
+    public void setProfiles(String[] profiles) {
+        this.profiles = profiles;
+    }
     public void setName(String name){
         this.name = name;
     };
@@ -85,6 +89,9 @@ public abstract class Item {
     }
 
     // Getters
+    public String[] getProfiles() {
+        return profiles;
+    }
     public String getName() {
         return this.name;
     }

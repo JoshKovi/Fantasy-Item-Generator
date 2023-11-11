@@ -19,11 +19,11 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
-import fantasy.item.generator.Data.DataHelpers.Rarity;
-import fantasy.item.generator.Data.DataHandling.EnumMultation;
-import fantasy.item.generator.Weapon.Weapon;
-import fantasy.item.generator.Weapon.WeaponProperties;
-import fantasy.item.generator.Weapon.WeaponsData;
+import fantasy.item.generator.Data.Attributes.Rarity;
+import fantasy.item.generator.Data.DataHandling.RarityMutilation;
+import fantasy.item.generator.Data.Items.Weapon.Weapon;
+import fantasy.item.generator.Data.Items.Weapon.WeaponProperties;
+import fantasy.item.generator.Data.Items.Weapon.WeaponsData;
 
 public class SqlLiteDBController {
     public static final String DB_VERSION = "0.0.1";
@@ -35,6 +35,7 @@ public class SqlLiteDBController {
     public static final String RARITY_DESCRIPTORS_TABLE_NAME = "Rarity_Descriptors_";
 
     private static SqlLiteDBController controller;
+    private static SessionFactory sessionFactory;
 
     public static SqlLiteDBController getInstance(){
         if (controller == null){
@@ -46,29 +47,87 @@ public class SqlLiteDBController {
     private SqlLiteDBController(){
         File sqlFile  = new File(DB_FILE_URL);
         if(!sqlFile.exists()){
+            sessionFactory = HibernateUtil.getSessionFactory();
             if(!initializeSQLDB()){
                 return;
             }
+        } else {
+            sessionFactory = HibernateUtil.getSessionFactory();
         }
 
         loadInTables();
 
     }
 
+    public boolean resetDB(){
+        File sqlFile  = new File(DB_FILE_URL);
+        boolean status;
+        if(sqlFile.exists()){
+            try(Connection connection = DriverManager.getConnection(SQL_URL)){
+                Statement statement = connection.createStatement();
+                statement.execute("PRAGMA foreign_keys=off");
+                String sql = "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')";
+                statement.execute(sql);
+                ResultSet results = statement.getResultSet();
+                List<String> tableNames = new ArrayList<>();
+                while (results.next()) {
+                    tableNames.add(results.getString("name"));
+                }
+                for(String tableName : tableNames){
+                    statement.execute("DROP TABLE IF EXISTS " + tableName);
+                }
+                statement.execute("PRAGMA foreign_keys=on");
+                sessionFactory = HibernateUtil.resetSessionFactory();
+                status = true;
+            } catch (Exception e){
+                System.out.println("Exception occured: " + e.getMessage());
+                status = false;
+            }
+        } else {
+            status = true;
+        }
+        status = initializeSQLDB() && status;
+        loadInTables();
+        return status;
+
+    }
 
     private void loadInTables() {
-        String weaponsSql = "FROM " + WeaponProperties.class.getSimpleName();
-        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+        loadRarities();
+
+        WeaponsData.getInstance().setWeaponsPropsList(LoadFromTable(WeaponProperties.class));
+        WeaponsData.getInstance().setWeaponsList(LoadFromTable(Weapon.class));
+    }
+
+    private <T>List<T> LoadFromTable(Class<T> clazz) {
+        String tableQueryString = "FROM " + clazz.getSimpleName();
         try(Session session = sessionFactory.openSession()){
             Transaction transaction = session.beginTransaction();
-            Query<WeaponProperties> queryProps = session.createQuery(weaponsSql, WeaponProperties.class);
-            List<WeaponProperties> weaponProperties = queryProps.list();
+            Query<T> queryProps = session.createQuery(tableQueryString, clazz);
+            List<T> tableList = queryProps.list();
             transaction.commit();
-            EnumMultation.setWeaponsProps(weaponProperties);
+            return tableList;
         } catch (Exception e){
             System.out.println("Exception occured: " + e.getMessage());
         }
+        return new ArrayList<T>();
+    }
 
+
+    // public void loadWeaponsProperties(){
+    //     String weaponsSql = "FROM " + WeaponProperties.class.getSimpleName();
+    //     try(Session session = sessionFactory.openSession()){
+    //         Transaction transaction = session.beginTransaction();
+    //         Query<WeaponProperties> queryProps = session.createQuery(weaponsSql, WeaponProperties.class);
+    //         List<WeaponProperties> weaponProperties = queryProps.list();
+    //         transaction.commit();
+    //         WeaponsData.getInstance().setWeaponsPropsList(weaponProperties);
+    //     } catch (Exception e){
+    //         System.out.println("Exception occured: " + e.getMessage());
+    //     }
+    // }
+
+    public void loadRarities(){
         HashMap<Rarity, List<String>> rarityDescriptions = new HashMap<>();
         try(Connection connection = DriverManager.getConnection(SQL_URL)){
             for(Rarity eValue : Rarity.values()){
@@ -86,16 +145,15 @@ public class SqlLiteDBController {
             System.out.println("Exception occured: " + e.getMessage());
         }
         
-        EnumMultation.setRarityMapFromDB(rarityDescriptions);
+        RarityMutilation.setRarityMapFromDB(rarityDescriptions);
     }
 
     private boolean initializeSQLDB() {
-        try {
-            Connection connection = DriverManager.getConnection(SQL_URL);
+        try (Connection connection = DriverManager.getConnection(SQL_URL)){
             if (connection != null){
                 DatabaseMetaData meta = connection.getMetaData();
                 System.out.println("Database was successfully created! Driver name is: " + meta.getDriverName());
-                initializeWeaponsTables();
+                initializeWeaponsPropertiesTable();
                 initializeRarityTables(connection);
                 return true;
             }
@@ -106,12 +164,12 @@ public class SqlLiteDBController {
     }
 
 
-    public static void initializeWeaponsTypeTables(List<Weapon> weapons) {
-        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+    public static void addToWeaponsTable(List<Weapon> weapons) {
         try (Session session = sessionFactory.openSession()){
             session.beginTransaction();
             for(Weapon weapon: weapons){
-                session.persist(weapon);
+                if(weapon.id == null) session.persist(weapon);
+                else session.update(weapon);
             }    
             session.getTransaction().commit();
         } catch (Exception e){
@@ -136,48 +194,19 @@ public class SqlLiteDBController {
                 preparedStatement.executeUpdate();
             }   
         }
-
-        
     }
 
 
-    private static void initializeWeaponsTables() throws SQLException{
-        List<WeaponProperties> weapons = WeaponsData.getInstance().initializeWeaponsDB();
-        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+    private static void initializeWeaponsPropertiesTable() throws SQLException{
         try (Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            for(WeaponProperties weapon : weapons){
+            for(WeaponProperties weapon : WeaponsData.getInstance().initializeWeaponsDB()){
                 session.persist(weapon);
             }
             session.getTransaction().commit();
         } catch (Exception e){
             System.out.println("Exception occured: " + e.getMessage());
         }
-        // String sqlStatement = "CREATE TABLE IF NOT EXISTS " + WEAPONS_DEFAULT_TABLE_NAME + "(\n"
-        //     +" weaponType text PRIMARY KEY,\n"
-        //     + " cost integer,\n"
-        //     + " costUnit text,\n"
-        //     + " die text,\n"
-        //     + " diceMulti integer,\n"
-        //     + " damageType text,\n"
-        //     + " weight double,\n"
-        //     + " info text\n"
-        //     + ");";
-        // Statement statement = connection.createStatement();
-        // statement.execute(sqlStatement);
-
-        // sqlStatement = String.format(weapons.get(0).getSQLInsertString(), WEAPONS_DEFAULT_TABLE_NAME);
-        // PreparedStatement preparedStatement = connection.prepareStatement(sqlStatement);
-
-            // preparedStatement.setString(1, weapon.getWeaponType());
-            // preparedStatement.setInt(2, weapon.getCost());
-            // preparedStatement.setString(3, weapon.getCostUnit());
-            // preparedStatement.setString(4, weapon.getDieString());
-            // preparedStatement.setInt(5, weapon.getDiceMulti());
-            // preparedStatement.setString(6, weapon.getDamageTypeString());
-            // preparedStatement.setDouble(7, weapon.getWeight());
-            // preparedStatement.setString(8, weapon.getInfo());
-            // preparedStatement.executeUpdate();
     }
 
 
@@ -200,8 +229,7 @@ public class SqlLiteDBController {
         
         String sqlTypeStatement = String.format("SELECT * FROM %s", tableName);
 
-        try {
-            Connection connection = DriverManager.getConnection(SQL_URL);
+        try (Connection connection = DriverManager.getConnection(SQL_URL)){
             if (connection != null){
                 Statement statement = connection.createStatement();
                 ResultSetMetaData metaData = statement.executeQuery(sqlTypeStatement).getMetaData();
@@ -231,9 +259,6 @@ public class SqlLiteDBController {
                 }
 
                 preparedStatement.executeUpdate();
-
-
-
             }
         } catch (SQLException e){
             System.out.println(e.getMessage());
@@ -243,10 +268,8 @@ public class SqlLiteDBController {
     public void removeListEntryFromTable(String tableName, String columnName, Object value){
         String sqlRemoveStatement = String.format("DELETE FROM %s WHERE %s = ?", tableName, columnName);
 
-        try {
-            Connection connection = DriverManager.getConnection(SQL_URL);
+        try (Connection connection = DriverManager.getConnection(SQL_URL)) {
             if (connection != null){
-
                 PreparedStatement preparedStatement = connection.prepareStatement(sqlRemoveStatement);
                 preparedStatement.setString(1, (String) value);
                 preparedStatement.executeUpdate();
@@ -255,5 +278,4 @@ public class SqlLiteDBController {
             System.out.println(e.getMessage());
         }
     }
-
 }

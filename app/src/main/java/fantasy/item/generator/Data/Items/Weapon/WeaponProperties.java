@@ -1,15 +1,19 @@
-package fantasy.item.generator.Weapon;
+package fantasy.item.generator.Data.Items.Weapon;
 
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-import fantasy.item.generator.Data.DataHelpers.DamageType;
-import fantasy.item.generator.Data.DataHelpers.Dice;
+import fantasy.item.generator.Data.Attributes.Dice;
+import fantasy.item.generator.Data.Attributes.DataHelpers.DamageType;
 
 @Entity
 public class WeaponProperties {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    public Long id;
     private String weaponType;
     private int cost;
     private String costUnit;
@@ -18,11 +22,17 @@ public class WeaponProperties {
     private DamageType damageType;
     private double weight;
     private String info;
+    private String[] profiles;
 
     public WeaponProperties(){};
 
     public WeaponProperties(String weaponType, int cost, String costUnit,
             Dice die, int diceMulti, DamageType damageType, double weight, String info) {
+                this(weaponType, cost, costUnit, die, diceMulti, damageType, weight, info, new String[]{"Defaults"});
+    }
+
+    public WeaponProperties(String weaponType, int cost, String costUnit,
+            Dice die, int diceMulti, DamageType damageType, double weight, String info, String[] profiles) {
         this.weaponType = weaponType;
         this.cost = cost;
         this.costUnit = costUnit.toUpperCase();
@@ -31,22 +41,12 @@ public class WeaponProperties {
         this.damageType = damageType;
         this.weight = weight;
         this.info = info;
+        this.profiles = profiles;
     }
 
-    // public String getSQLInsertString(){
-    //     String columnNames = "(weaponType,cost,costUnit,die,diceMulti,damageType,weight,info)";
-    //     String values = "(?,?,?,?,?,?,?,?)";
-    //     String sql = "INSERT INTO %s"+ columnNames + " VALUES" + values;
-    //     return sql;
-    // }
-
-    // public List<String> replaceSQLEntry(){
-    //     return Arrays.asList(new String[]{
-    //         "DELETE FROM %s WHERE weaponType='"+ weaponType +"'",
-    //         getSQLInsertString()
-    //     });
-    // }
-
+    public String[] getProfiles() {
+        return profiles;
+    }
     public String getWeaponType() {
         return weaponType;
     }
