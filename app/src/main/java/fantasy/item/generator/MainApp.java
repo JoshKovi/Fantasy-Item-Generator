@@ -3,15 +3,10 @@
  */
 package fantasy.item.generator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import fantasy.item.generator.Data.Attributes.Dice;
 import fantasy.item.generator.Data.DataStorage.SqlLiteDBController;
-import fantasy.item.generator.Data.Items.Weapon.Weapon;
-import fantasy.item.generator.Data.Items.Weapon.WeaponsData;
-
+import fantasy.item.generator.GUI.LogonPanel;
+import fantasy.item.generator.GUI.UIMainWindow;
+import javax.swing.JPanel;
 
 public class MainApp {
 
@@ -19,18 +14,11 @@ public class MainApp {
 
         SqlLiteDBController dbController = SqlLiteDBController.getInstance();
         
-        List<Weapon> weapons = new ArrayList<>();
+        UIMainWindow uiManager = UIMainWindow.getInstance();
+        JPanel loginWindow = uiManager.addJPanelAndSetView(new LogonPanel());
+        JPanel mainView = uiManager.addJPanelToList(new MainView());
 
 
-        int count = 0; 
-        while (count < 100){
-            int picker = new Random().nextInt(1,Dice.D20.maxD());
-            Weapon weapon = new Weapon(picker);
-            WeaponsData.getInstance().addWeapon(weapon);
-            weapons.add(weapon);
-            count++;
-        }
-        SqlLiteDBController.addToWeaponsTable(WeaponsData.getInstance().getWeapons());
 
 
         return;

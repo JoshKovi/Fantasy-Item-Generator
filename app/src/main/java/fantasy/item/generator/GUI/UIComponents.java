@@ -1,16 +1,11 @@
 package fantasy.item.generator.GUI;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.event.ComponentListener;
+import java.awt.event.ActionListener;
+import java.util.Collection;
 
-import javax.swing.Action;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
 public class UIComponents {
@@ -31,42 +26,21 @@ public class UIComponents {
         return textArea;
     }
 
-    public static JButton genTextButton(String label, String name, Action action) {
+    public static JButton genTextButton(String label, String name, ActionListener ActionListener) {
         JButton jButton = new JButton(label);
         jButton.setName(name);
-        jButton.setAction(action);
+        jButton.addActionListener(ActionListener);
         return jButton;
     }
 
-    public static JPanel entryPanel(JLabel label, JTextArea textArea) {
-        JPanel panel = new JPanel();
-        panel.setName(label.getName() + " panel");
-        panel.setLayout(new GridLayout(1, 2));
-        panel.add(label);
-        panel.add(textArea);
-        return panel;
+    public static JComboBox<String> genEditableComboBox(Collection<String> comboValues, String name){
+        JComboBox<String> dropDown = new JComboBox<>(comboValues.toArray(new String[0]));
+        dropDown.setName(name);
+        dropDown.setEditable(true);
+        return dropDown;
     }
 
-    public static JPanel generateTextEntryPanel(String namePrefix, String labelText, String defaultText,
-            JPanel logonWindow) {
-        Dimension parentSize = logonWindow.getSize();
-        Dimension compSize = new Dimension(parentSize.width / 3, 60);
 
-        JLabel label = genLabel(labelText, namePrefix + "_label");
-        label.setMinimumSize(compSize);
-        label.setSize(compSize);
 
-        JTextArea textArea = genTextArea(defaultText, namePrefix + "_text");
-        textArea.setMinimumSize(compSize);
-        textArea.setSize(compSize);
-
-        JPanel panel = new JPanel();
-        panel.setName(namePrefix);
-        panel.add(label);
-        panel.add(textArea);
-        panel.setLayout(new GridLayout());
-        panel.setVisible(true);
-        return panel;
-    }
 
 }

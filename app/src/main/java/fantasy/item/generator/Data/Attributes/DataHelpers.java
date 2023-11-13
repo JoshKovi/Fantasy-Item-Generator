@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataHelpers {
+
     public static enum DamageType {
         Acid, Bludgeoning, Cold, Fire, Force, Lightning, Necrotic, Piercing,
         Poison, Psychic, Radiant, Slashing, Thunder
