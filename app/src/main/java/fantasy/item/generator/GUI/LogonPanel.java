@@ -41,6 +41,7 @@ public class LogonPanel extends JPanel{
 
     private final Color backgroundRed = new Color(217, 21, 11, 40);
     private final Color backgroundGreen = new Color(9, 156, 39, 40);
+    private final Color panelBackground = new Color(220,230, 220, 80);
 
     public LogonPanel(){
         super(new GridBagLayout());
@@ -67,32 +68,34 @@ public class LogonPanel extends JPanel{
         animationTimer = new Timer(20, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Update gradient positions
-                if (reverseX) {
-                    gradientX1 -= increment;
-                    gradientX2 -= increment;
-                } else {
-                    gradientX1 += increment;
-                    gradientX2 += increment;
-                }
+                if (isVisible()) {
+                    // Update gradient positions
+                    if (reverseX) {
+                        gradientX1 -= increment;
+                        gradientX2 -= increment;
+                    } else {
+                        gradientX1 += increment;
+                        gradientX2 += increment;
+                    }
 
-                if (reverseY) {
-                    gradientY1 -= increment;
-                    gradientY2 -= increment;
-                } else {
-                    gradientY1 += increment;
-                    gradientY2 += increment;
-                }
+                    if (reverseY) {
+                        gradientY1 -= increment;
+                        gradientY2 -= increment;
+                    } else {
+                        gradientY1 += increment;
+                        gradientY2 += increment;
+                    }
 
-                // Check and reverse if exceeding bounds
-                if (gradientX1 <= -0.2f || gradientX1 >= 1.2f) {
-                    reverseX = !reverseX;
+                    // Check and reverse if exceeding bounds
+                    if (gradientX1 <= -0.2f || gradientX1 >= 1.2f) {
+                        reverseX = !reverseX;
+                    }
+                    if (gradientY1 <= -0.2f || gradientY1 >= 1.2f) {
+                        reverseY = !reverseY;
+                    }
+                    
+                    repaint();
                 }
-                if (gradientY1 <= -0.2f || gradientY1 >= 1.2f) {
-                    reverseY = !reverseY;
-                }
-                
-                repaint();
             }
         });
 
@@ -143,8 +146,8 @@ public class LogonPanel extends JPanel{
         JButton entry = UIComponents.genTextButton("Enter", "Enter", new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO: Figure out how to properly pass an event up here to load the DB and Switch to a main UI.
-                // Ill probably need to Modify the UIManager to become a JFrame
+                System.out.println(e.getActionCommand());
+                UIMainWindow.getInstance().setViewWithName(MainView.MAIN_VIEW_NAME);
             }
         });
 
@@ -171,8 +174,8 @@ public class LogonPanel extends JPanel{
         constraints.gridy = 2;
         //constraints.anchor = GridBagConstraints.CENTER;
         login.add(entry, constraints);
-        
-        login.setOpaque(false);
+        login.setBackground(panelBackground);
+        //login.setOpaque(false);
         login.setVisible(true);
         return login;
     }

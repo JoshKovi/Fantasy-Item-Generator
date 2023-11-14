@@ -6,10 +6,13 @@ import java.util.Map;
 import java.util.HashMap;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class UIMainWindow extends JFrame{
 
@@ -36,6 +39,7 @@ public class UIMainWindow extends JFrame{
         this.getContentPane().setBackground(Color.GREEN);
         this.setLayout(new BorderLayout());
         this.setVisible(true);
+
     }
 
     public JFrame openNewChildWindow(String frameTitle){
@@ -50,17 +54,25 @@ public class UIMainWindow extends JFrame{
 
     public JPanel addJPanelAndSetView(JPanel panel){
         panelsAvailable.putIfAbsent(panel.getName(), panel);
-        this.getContentPane().removeAll();
+        if (this.mainPanel != null) {
+            this.mainPanel.setVisible(false);
+        }
         this.getContentPane().add(panel);
         this.mainPanel = panel;
         panel.setPreferredSize(this.getContentPane().getSize());
-        panel.setVisible(true);
+        this.mainPanel.setVisible(true);
+        this.mainPanel.repaint();
         this.pack();
         return panel;
     }
 
+    public JPanel getViewByName(String panelName){
+        return panelsAvailable.get(panelName);
+    }
+
     public JPanel setViewWithName(String panelName){
         if(!panelsAvailable.containsKey(panelName)){
+            System.out.println(panelName + " Does not exist.");
             return this.mainPanel;
         }
         return addJPanelAndSetView(panelsAvailable.get(panelName));

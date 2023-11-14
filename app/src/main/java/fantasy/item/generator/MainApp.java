@@ -5,18 +5,22 @@ package fantasy.item.generator;
 
 import fantasy.item.generator.Data.DataStorage.SqlLiteDBController;
 import fantasy.item.generator.GUI.LogonPanel;
+import fantasy.item.generator.GUI.MainView;
 import fantasy.item.generator.GUI.UIMainWindow;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 public class MainApp {
 
     public static void main(String[] args) {
 
-        SqlLiteDBController dbController = SqlLiteDBController.getInstance();
-        
+        //SqlLiteDBController dbController = SqlLiteDBController.getInstance();
+
         UIMainWindow uiManager = UIMainWindow.getInstance();
         JPanel loginWindow = uiManager.addJPanelAndSetView(new LogonPanel());
         JPanel mainView = uiManager.addJPanelToList(new MainView());
+
+        
 
 
 

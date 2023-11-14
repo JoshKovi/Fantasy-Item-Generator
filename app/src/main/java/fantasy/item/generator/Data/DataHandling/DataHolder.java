@@ -8,6 +8,7 @@ public class DataHolder {
 
     private static DataHolder holder;
 
+
     private DataHolder(){}
 
     public static DataHolder getInstance(){
