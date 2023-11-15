@@ -36,7 +36,7 @@ public class UIMainWindow extends JFrame{
         super(DEFAULT_WINDOW_TITLE);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setMinimumSize(DEFAULT_MAIN_WINDOW_DIMENSION);
-        this.getContentPane().setBackground(Color.GREEN);
+        this.getContentPane().setBackground(Color.LIGHT_GRAY);
         this.setLayout(new BorderLayout());
         this.setVisible(true);
 
@@ -59,8 +59,8 @@ public class UIMainWindow extends JFrame{
         }
         this.getContentPane().add(panel);
         this.mainPanel = panel;
-        panel.setPreferredSize(this.getContentPane().getSize());
         this.mainPanel.setVisible(true);
+        this.mainPanel.revalidate();
         this.mainPanel.repaint();
         this.pack();
         return panel;

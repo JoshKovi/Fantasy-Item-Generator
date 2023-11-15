@@ -1,6 +1,8 @@
 package fantasy.item.generator.GUI.ComponentButtons;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -19,7 +21,8 @@ public class NavButton extends JButton {
 
     private final Color deepBlack = new Color(5,5,5);
     private final Color lightBlackGray = new Color(32,32,32);
-    private final Color clickedPadding = new Color(48,48,48);
+    private final Color clickedPadding = new Color(80,80,80);
+    private final Dimension CONSTANT_SIZE = new Dimension(140, 32);
     
     public NavButton(String buttonText, String buttonName, String panelNameToSwitch){
         super(buttonText);
@@ -27,6 +30,10 @@ public class NavButton extends JButton {
         this.setForeground(Color.WHITE);
 
         this.setToolTipText(panelNameToSwitch);
+        setMaximumSize(CONSTANT_SIZE);
+        setMinimumSize(CONSTANT_SIZE);
+        setSize(CONSTANT_SIZE);
+        setPreferredSize(CONSTANT_SIZE);
 
         setOpaque(false);
         setContentAreaFilled(false);
@@ -57,7 +64,7 @@ public class NavButton extends JButton {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
+        
         int width = getWidth();
         int height = getHeight();
 
@@ -72,6 +79,9 @@ public class NavButton extends JButton {
         int padding = height / 4;
         g2d.fillRect(padding, padding, width - padding * 2, height - padding * 2);
 
+        g2d.setColor(Color.WHITE);
+        FontMetrics fm = g2d.getFontMetrics();
+        g2d.drawString(this.getText(), (width - fm.stringWidth(this.getText())) /2.0f, (height + fm.getAscent() - fm.getDescent())  /2.0f); 
         g2d.dispose();
     }
 }
